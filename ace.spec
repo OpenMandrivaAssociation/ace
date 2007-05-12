@@ -13,8 +13,8 @@ License:        BSD-style
 Group:          System/Libraries
 Requires(post): info-install
 Requires(preun): info-install
-BuildRequires:        libopenssl-devel
-Buildroot:        %{_tmppath}/%{name}-%{version}-%{release}-root
+BuildRequires:  libopenssl-devel
+Buildroot:      %{_tmppath}/%{name}-%{version}-%{release}-root
 
 %description
 The ADAPTIVE Communication Environment (ACE) is a freely available,
@@ -74,7 +74,7 @@ ln -sf ../configure .
 %{configure2_5x} \
    --enable-lib-all \
    --disable-qos
-%make
+%{make}
 )
 
 %install
@@ -154,7 +154,9 @@ rm -rf %{buildroot}
 
 %files -n %{lib_name}
 %defattr(-,root,root)
-%doc ACE-INSTALL ACE-INSTALL.html AUTHORS ChangeLog COPYING FAQ PROBLEM-REPORT-FORM README THANKS VERSION
+# XXX: there are more docs in the subdirectories with the same names as some of 
+# XXX: these
+%doc ACE-INSTALL.html AUTHORS ChangeLog COPYING FAQ NEWS PROBLEM-REPORT-FORM README THANKS VERSION
 %{_libdir}/*-%{version}.so
 
 %files -n %{lib_name}-devel
