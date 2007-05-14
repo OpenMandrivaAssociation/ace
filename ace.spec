@@ -2,19 +2,19 @@
 %define lib_name_orig   %mklibname %{name}
 %define lib_name        %{lib_name_orig}%{lib_major}
 
-Name:           ace
-Version:        5.5.8
-Release:        %mkrel 1
-Epoch:          0
-Summary:        ADAPTIVE Communication Environment
-URL:            http://www.cs.wustl.edu/~schmidt/ACE.html
-Source0:        http://download.dre.vanderbilt.edu/ACE+TAO-distribution/ACE-src.tar.bz2
-License:        BSD-style
-Group:          System/Libraries
+Name: ace
+Version: 5.5.8
+Release: %mkrel 2
+Epoch: 0
+Summary: ADAPTIVE Communication Environment
+URL: http://www.cs.wustl.edu/~schmidt/ACE.html
+Source0: http://download.dre.vanderbilt.edu/ACE+TAO-distribution/ACE-src.tar.bz2
+License: BSD-style
+Group: System/Libraries
 Requires(post): info-install
 Requires(preun): info-install
 BuildRequires:  libopenssl-devel
-Buildroot:      %{_tmppath}/%{name}-%{version}-%{release}-root
+Buildroot: %{_tmppath}/%{name}-%{version}-%{release}-root
 
 %description
 The ADAPTIVE Communication Environment (ACE) is a freely available,
@@ -28,26 +28,59 @@ initialization, interprocess communication, shared memory management,
 message routing, dynamic (re)configuration of distributed services,
 concurrent execution and synchronization.
 
+#----------------------------------------------------------------------------
+
 %package -n %{lib_name}
-Summary:        Main library for ACE (ADAPTIVE Communication Environment)
-Group:          System/Libraries
+Summary: Main library for ACE (ADAPTIVE Communication Environment)
+Group: System/Libraries
 
 %description -n %{lib_name}
 This package contains the libraries needed to run programs dynamically linked
 with ACE (ADAPTIVE Communication Environment).
 
+%post -n %{lib_name} -p /sbin/ldconfig
+%postun -n %{lib_name} -p /sbin/ldconfig
+
+%files -n %{lib_name}
+%defattr(-,root,root)
+%doc ACE-INSTALL.html AUTHORS ChangeLog COPYING FAQ NEWS PROBLEM-REPORT-FORM README THANKS VERSION
+%{_libdir}/*-%{version}.so
+
+#----------------------------------------------------------------------------
+
 %package -n %{lib_name}-devel
-Group:          Development/C++
-Summary:        Shared libraries and header files for ACE (ADAPTIVE Communication Environment)
-Provides:       %{name}-devel = %{epoch}:%{version}-%{release}
-Provides:       lib%{name}-devel = %{epoch}:%{version}-%{release}
-Provides:       %{_lib}%{name}-devel = %{epoch}:%{version}-%{release}
-Provides:       gperf-ace = %{epoch}:%{version}-%{release}
-Requires:       %{lib_name} = %{epoch}:%{version}-%{release}
+Group: Development/C++
+Summary: Shared libraries and header files for ACE (ADAPTIVE Communication Environment)
+Provides: %{name}-devel = %{epoch}:%{version}-%{release}
+Provides: lib%{name}-devel = %{epoch}:%{version}-%{release}
+Provides: %{_lib}%{name}-devel = %{epoch}:%{version}-%{release}
+Provides: gperf-ace = %{epoch}:%{version}-%{release}
+Requires: %{lib_name} = %{epoch}:%{version}-%{release}
 
 %description -n %{lib_name}-devel
 The %{name} package contains the shared libraries and header files needed for
 developing ACE (ADAPTIVE Communication Environment) applications.
+
+%post -n %{lib_name}-devel
+%_install_info gperf-ace.info
+%preun -n %{lib_name}-devel
+%_remove_install_info gperf-ace.info
+
+%files -n %{lib_name}-devel
+%defattr(-,root,root)
+%doc ChangeLogs README.gperf
+%{_bindir}/*
+%{_mandir}/man1/*
+%{_infodir}/*
+%{_includedir}/%{name}
+%multiarch %{multiarch_includedir}/*
+%{_includedir}/ACEXML
+%{_includedir}/Kokyu
+%{_libdir}/*.so
+%{_libdir}/*.*a
+%{_libdir}/pkgconfig/*
+
+#----------------------------------------------------------------------------
 
 %package -n %{lib_name}-doc
 Group:          Books/Howtos
@@ -55,6 +88,12 @@ Summary:        Documentation and examples for ACE (ADAPTIVE Communication Envir
 
 %description -n %{lib_name}-doc
 Documentation and examples for ACE (ADAPTIVE Communication Environment).
+
+%files -n %{lib_name}-doc
+%defattr(-,root,root)
+%doc docs examples
+
+#----------------------------------------------------------------------------
 
 %prep
 %setup -q -n ACE_wrappers
@@ -65,8 +104,11 @@ chmod 755 examples/IPC_SAP/SOCK_SAP/run_test
 %build
 %{_bindir}/autoreconf -i -v -f
 
-export CFLAGS="${CFLAGS} %{optflags} -fPIC"
-export CXXFLAGS="${CXXFLAGS} %{optflags} -fPIC"
+# Lack of proper config way requires some sed trick to get functionalities enabled
+# THREAD_SAFE_ACCEPT
+sed -i "s/^#undef ACE_HAS_THREAD_SAFE_ACCEPT.*/#define ACE_HAS_THREAD_SAFE_ACCEPT/g" ace/config.h.in
+
+export CPPFLAGS="${CPPFLAGS} %{optflags} -fPIC -DPIC"
 
 mkdir -p objdir
 (cd objdir && \
@@ -142,37 +184,5 @@ fi
 %clean
 rm -rf %{buildroot}
 
-%post -n %{lib_name} -p /sbin/ldconfig
 
-%postun -n %{lib_name} -p /sbin/ldconfig
 
-%post -n %{lib_name}-devel
-%_install_info gperf-ace.info
-
-%preun -n %{lib_name}-devel
-%_remove_install_info gperf-ace.info
-
-%files -n %{lib_name}
-%defattr(-,root,root)
-# XXX: there are more docs in the subdirectories with the same names as some of 
-# XXX: these
-%doc ACE-INSTALL.html AUTHORS ChangeLog COPYING FAQ NEWS PROBLEM-REPORT-FORM README THANKS VERSION
-%{_libdir}/*-%{version}.so
-
-%files -n %{lib_name}-devel
-%defattr(-,root,root)
-%doc ChangeLogs README.gperf
-%{_bindir}/*
-%{_mandir}/man1/*
-%{_infodir}/*
-%{_includedir}/%{name}
-%multiarch %{multiarch_includedir}/*
-%{_includedir}/ACEXML
-%{_includedir}/Kokyu
-%{_libdir}/*.so
-%{_libdir}/*.*a
-%{_libdir}/pkgconfig/*
-
-%files -n %{lib_name}-doc
-%defattr(-,root,root)
-%doc docs examples
