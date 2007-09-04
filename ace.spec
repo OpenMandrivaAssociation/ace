@@ -1,10 +1,10 @@
 %define lib_major       5
-%define lib_name_orig   %mklibname %{name}
-%define lib_name        %{lib_name_orig}%{lib_major}
+%define lib_name        %mklibname %{name} %{lib_major}
+%define lib_name_devel  %mklibname %{name} -d
 
 Name: ace
-Version: 5.5.8
-Release: %mkrel 2
+Version: 5.6
+Release: %mkrel 1
 Epoch: 0
 Summary: ADAPTIVE Communication Environment
 URL: http://www.cs.wustl.edu/~schmidt/ACE.html
@@ -48,25 +48,24 @@ with ACE (ADAPTIVE Communication Environment).
 
 #----------------------------------------------------------------------------
 
-%package -n %{lib_name}-devel
+%package -n %{lib_name_devel}
 Group: Development/C++
 Summary: Shared libraries and header files for ACE (ADAPTIVE Communication Environment)
+Obsoletes: %{mklibname ace 5 -d} < %{epoch}:%{version}-%{release}
 Provides: %{name}-devel = %{epoch}:%{version}-%{release}
-Provides: lib%{name}-devel = %{epoch}:%{version}-%{release}
-Provides: %{_lib}%{name}-devel = %{epoch}:%{version}-%{release}
 Provides: gperf-ace = %{epoch}:%{version}-%{release}
 Requires: %{lib_name} = %{epoch}:%{version}-%{release}
 
-%description -n %{lib_name}-devel
+%description -n %{lib_name_devel}
 The %{name} package contains the shared libraries and header files needed for
 developing ACE (ADAPTIVE Communication Environment) applications.
 
-%post -n %{lib_name}-devel
+%post -n %{lib_name_devel}
 %_install_info gperf-ace.info
-%preun -n %{lib_name}-devel
+%preun -n %{lib_name_devel}
 %_remove_install_info gperf-ace.info
 
-%files -n %{lib_name}-devel
+%files -n %{lib_name_devel}
 %defattr(-,root,root)
 %doc ChangeLogs README.gperf
 %{_bindir}/*
@@ -82,14 +81,16 @@ developing ACE (ADAPTIVE Communication Environment) applications.
 
 #----------------------------------------------------------------------------
 
-%package -n %{lib_name}-doc
+%package -n %{name}-doc
 Group:          Books/Howtos
 Summary:        Documentation and examples for ACE (ADAPTIVE Communication Environment)
+Obsoletes:      %{lib_name}-doc < %{epoch}:%{version}-%{release}
+Provides:       %{lib_name}-doc = %{epoch}:%{version}-%{release}
 
-%description -n %{lib_name}-doc
+%description -n %{name}-doc
 Documentation and examples for ACE (ADAPTIVE Communication Environment).
 
-%files -n %{lib_name}-doc
+%files -n %{name}-doc
 %defattr(-,root,root)
 %doc docs examples
 
