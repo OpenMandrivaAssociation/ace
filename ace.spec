@@ -14,6 +14,7 @@ Group: System/Libraries
 Requires(post): info-install
 Requires(preun): info-install
 BuildRequires:  libopenssl-devel
+Buildroot: %{_tmppath}/%{name}-%{version}-%{release}-root
 
 %description
 The ADAPTIVE Communication Environment (ACE) is a freely available,
