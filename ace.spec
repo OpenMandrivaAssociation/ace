@@ -4,7 +4,7 @@
 
 Name: ace
 Version: 5.6
-Release: %mkrel 1
+Release: %mkrel 2
 Epoch: 0
 Summary: ADAPTIVE Communication Environment
 URL: http://www.cs.wustl.edu/~schmidt/ACE.html
