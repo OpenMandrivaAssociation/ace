@@ -1,18 +1,13 @@
-%define lib_major       5
-%define lib_name        %mklibname %{name} %{lib_major}
-%define lib_name_devel  %mklibname %{name} -d
-
 Name: ace
-Version: 5.6
-Release: %mkrel 3
+Version: 5.7.2
+Release: %mkrel 1
 Epoch: 0
 Summary: ADAPTIVE Communication Environment
 URL: http://www.cs.wustl.edu/~schmidt/ACE.html
 Source0: http://download.dre.vanderbilt.edu/ACE+TAO-distribution/ACE-src.tar.bz2
+Patch0: ACE-src-install.patch
 License: BSD-style
 Group: System/Libraries
-Requires(post): info-install
-Requires(preun): info-install
 BuildRequires:  libopenssl-devel
 Buildroot: %{_tmppath}/%{name}-%{version}-%{release}-root
 
@@ -29,6 +24,9 @@ message routing, dynamic (re)configuration of distributed services,
 concurrent execution and synchronization.
 
 #----------------------------------------------------------------------------
+
+%define lib_major 5
+%define lib_name %mklibname %{name} %{lib_major}
 
 %package -n %{lib_name}
 Summary: Main library for ACE (ADAPTIVE Communication Environment)
@@ -47,41 +45,54 @@ with ACE (ADAPTIVE Communication Environment).
 
 %files -n %{lib_name}
 %defattr(-,root,root)
-%doc ACE-INSTALL.html AUTHORS ChangeLog COPYING FAQ NEWS PROBLEM-REPORT-FORM README THANKS VERSION
 %{_libdir}/*-%{version}.so
 
 #----------------------------------------------------------------------------
+
+%define lib_name_devel  %mklibname %{name} -d
 
 %package -n %{lib_name_devel}
 Group: Development/C++
 Summary: Shared libraries and header files for ACE (ADAPTIVE Communication Environment)
 Obsoletes: %{mklibname ace 5 -d} < %{epoch}:%{version}-%{release}
 Provides: %{name}-devel = %{epoch}:%{version}-%{release}
-Provides: gperf-ace = %{epoch}:%{version}-%{release}
 Requires: %{lib_name} = %{epoch}:%{version}-%{release}
+Obsoletes: gperf-ace
 
 %description -n %{lib_name_devel}
 The %{name} package contains the shared libraries and header files needed for
 developing ACE (ADAPTIVE Communication Environment) applications.
 
-%post -n %{lib_name_devel}
-%_install_info gperf-ace.info
-%preun -n %{lib_name_devel}
-%_remove_install_info gperf-ace.info
-
 %files -n %{lib_name_devel}
 %defattr(-,root,root)
-%doc ChangeLogs README.gperf
+%doc ACE-INSTALL.html AUTHORS ChangeLog COPYING FAQ NEWS PROBLEM-REPORT-FORM README THANKS VERSION
 %{_bindir}/*
 %{_mandir}/man1/*
-%{_infodir}/*
 %{_includedir}/%{name}
-%multiarch %{multiarch_includedir}/*
 %{_includedir}/ACEXML
 %{_includedir}/Kokyu
 %{_libdir}/*.so
-%{_libdir}/*.*a
+%{_libdir}/*.la
 %{_libdir}/pkgconfig/*
+%multiarch %{multiarch_includedir}/*
+%exclude %{_libdir}/*-%{version}.so
+
+#----------------------------------------------------------------------------
+
+%define lib_name_devel_stat  %mklibname %{name} -d -s
+
+%package -n %{lib_name_devel_stat}
+Group: Development/C++
+Summary: Shared libraries and header files for ACE (ADAPTIVE Communication Environment)
+Requires: %{lib_name_devel} = %{epoch}:%{version}-%{release}
+
+%description -n %{lib_name_devel_stat}
+The %{name} package contains the shared libraries and header files needed for
+developing ACE (ADAPTIVE Communication Environment) applications.
+
+%files -n %{lib_name_devel_stat}
+%defattr(-,root,root)
+%{_libdir}/*.a
 
 #----------------------------------------------------------------------------
 
@@ -102,53 +113,40 @@ Documentation and examples for ACE (ADAPTIVE Communication Environment).
 
 %prep
 %setup -q -n ACE_wrappers
-%{_bindir}/find examples -type f -name "*.ds[pw]" -o -name "*.sln" -o -name "*.vc[pw]" -o -name "*.vcproj" -o -name "*.bor" | \
-  %{_bindir}/xargs perl -pi -e 's|\r$||g'
-chmod 755 examples/IPC_SAP/SOCK_SAP/run_test
+%patch0 -p0 -b .install
+
+find examples -type f -name "*.ds[pw]" -o -name "*.sln" -o -name "*.vc[pw]" -o -name "*.vcproj" -o -name "*.bor" | \
+xargs perl -pi -e 's|\r$||g'
 
 %build
-%{_bindir}/autoreconf -i -v -f
+autoreconf -i -v -f
 
 # Lack of proper config way requires some sed trick to get functionalities enabled
 # THREAD_SAFE_ACCEPT
 sed -i "s/^#undef ACE_HAS_THREAD_SAFE_ACCEPT.*/#define ACE_HAS_THREAD_SAFE_ACCEPT/g" ace/config.h.in
 
-export CPPFLAGS="${CPPFLAGS} %{optflags} -fPIC -DPIC"
+export CPPFLAGS="%{optflags} -fPIC -DPIC"
+export LDFLAGS="%{ldflags} -lpthread"
 
-mkdir -p objdir
-(cd objdir && \
-ln -sf ../configure .
-%{configure2_5x} \
+export CONFIGURE_TOP=${PWD}
+
+mkdir -p build
+cd build 
+
+%configure2_5x \
    --enable-lib-all \
+   --enable-static \
+   --enable-symbol-visibility \
    --disable-qos
-%{make}
-)
+
+%make
 
 %install
 rm -rf %{buildroot}
 
-(cd objdir && %{makeinstall_std})
+%makeinstall_std -C build
 
 # The install script is incomplete (to be polite)
-
-# gperf is provided by a different rpm
-mv -f %{buildroot}%{_bindir}/gperf %{buildroot}%{_bindir}/gperf-ace
-
-cat > README.gperf << EOF
-ACE provides its own version of gperf which has been renamed to
-gperf-ace to avoid a conflict with the gperf rpm. To use this
-program, you must define  ACE_GPERF="%{_bindir}/gperf-ace" at
-compile time.
-EOF
-
-# man and info pages
-mkdir -p %{buildroot}%{_infodir}
-install -m 644 apps/gperf/gperf.info %{buildroot}%{_infodir}/gperf-ace.info
-perl -pi -e 's/gperf/gperf-ace/g;' -e 's/Gperf/Gperf-Ace/g;' \
-              -e 's/GPERF/GPERF-ACE/g;' %{buildroot}%{_infodir}/gperf-ace.info
-mkdir -p %{buildroot}%{_mandir}/man1
-install -m 644 apps/gperf/gperf.1 %{buildroot}%{_mandir}/man1/gperf-ace.1
-rm -f %{buildroot}%{_mandir}/man1/gperf.1
 
 # Shameless adaptation from Debian rules
 install -m 755 bin/generate_export_file.pl %{buildroot}%{_bindir}
@@ -181,7 +179,6 @@ if test x"%{_libdir}" != "x%{_prefix}/lib"; then
 fi
 
 # multiarch
-%multiarch_includes %{buildroot}%{_includedir}/ace/config-borland-common.h
 %multiarch_includes %{buildroot}%{_includedir}/ace/config.h
 %multiarch_includes %{buildroot}%{_includedir}/ace/config-win32-common.h
 %multiarch_includes %{buildroot}%{_includedir}/ace/config-win32-ghs.h
