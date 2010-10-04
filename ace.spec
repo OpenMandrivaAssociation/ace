@@ -1,14 +1,15 @@
 Name: ace
-Version: 5.7.2
+Version: 5.8.1
 Release: %mkrel 1
 Epoch: 0
 Summary: ADAPTIVE Communication Environment
 URL: http://www.cs.wustl.edu/~schmidt/ACE.html
-Source0: http://download.dre.vanderbilt.edu/ACE+TAO-distribution/ACE-src.tar.bz2
-Patch0: ACE-src-install.patch
+Source0: http://download.dre.vanderbilt.edu/previous_versions/ACE-src-%{version}.tar.bz2
+Patch1: ACE-5.8.1-link.patch
+Patch2: ACE-5.8.1-ssl-1.0.patch
 License: BSD-style
 Group: System/Libraries
-BuildRequires:  libopenssl-devel
+BuildRequires: openssl-devel
 Buildroot: %{_tmppath}/%{name}-%{version}-%{release}-root
 
 %description
@@ -113,33 +114,26 @@ Documentation and examples for ACE (ADAPTIVE Communication Environment).
 
 %prep
 %setup -q -n ACE_wrappers
-%patch0 -p0 -b .install
-
-find examples -type f -name "*.ds[pw]" -o -name "*.sln" -o -name "*.vc[pw]" -o -name "*.vcproj" -o -name "*.bor" | \
-xargs perl -pi -e 's|\r$||g'
+%patch1 -p0 -b .link
+%patch2 -p0 -b .ssl
 
 %build
 autoreconf -i -v -f
-
-# Lack of proper config way requires some sed trick to get functionalities enabled
-# THREAD_SAFE_ACCEPT
-sed -i "s/^#undef ACE_HAS_THREAD_SAFE_ACCEPT.*/#define ACE_HAS_THREAD_SAFE_ACCEPT/g" ace/config.h.in
-
-export CPPFLAGS="%{optflags} -fPIC -DPIC"
-export LDFLAGS="%{ldflags} -lpthread"
 
 export CONFIGURE_TOP=${PWD}
 
 mkdir -p build
 cd build 
-
 %configure2_5x \
    --enable-lib-all \
    --enable-static \
    --enable-symbol-visibility \
-   --disable-qos
-
+   --disable-qos \
+   --with-openssl=%{_prefix} \
+   --with-openssl-include=%{_includedir} \
+   --with-openssl-libdir=%{_libdir}
 %make
+cd -
 
 %install
 rm -rf %{buildroot}
@@ -185,6 +179,3 @@ fi
 
 %clean
 rm -rf %{buildroot}
-
-
-
