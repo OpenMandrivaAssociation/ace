@@ -1,0 +1,11 @@
+--- ace/Makefile.am.link	2010-03-05 13:20:47.000000000 +0100
++++ ace/Makefile.am	2010-10-04 17:14:26.000000000 +0200
+@@ -348,6 +348,8 @@
+ libACE_la_LDFLAGS = \
+  -release @ACE_VERSION_NAME@
+ 
++libACE_la_LIBADD = -lpthread
++
+ nobase_include_HEADERS += \
+   ACE.h \
+   ACE.inl \
