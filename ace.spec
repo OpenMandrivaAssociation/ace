@@ -1,16 +1,14 @@
-Name: ace
-Version: 5.8.1
-Release: %mkrel 1
-Epoch: 0
-Summary: ADAPTIVE Communication Environment
-URL: http://www.cs.wustl.edu/~schmidt/ACE.html
-Source0: http://download.dre.vanderbilt.edu/previous_versions/ACE-src-%{version}.tar.bz2
-Patch1: ACE-5.8.1-link.patch
-Patch2: ACE-5.8.1-ssl-1.0.patch
-License: BSD-style
-Group: System/Libraries
-BuildRequires: openssl-devel
-Buildroot: %{_tmppath}/%{name}-%{version}-%{release}-root
+Name:		ace
+Version:	5.8.1
+Release:	2
+Summary:	ADAPTIVE Communication Environment
+License: 	BSD-style
+Group:		System/Libraries
+URL:		http://www.cs.wustl.edu/~schmidt/ACE.html
+Source0:	http://download.dre.vanderbilt.edu/previous_versions/ACE-src-%{version}.tar.bz2
+Patch1:		ACE-5.8.1-link.patch
+Patch2:		ACE-5.8.1-ssl-1.0.patch
+BuildRequires:	pkgconfig(openssl)
 
 %description
 The ADAPTIVE Communication Environment (ACE) is a freely available,
@@ -37,15 +35,7 @@ Group: System/Libraries
 This package contains the libraries needed to run programs dynamically linked
 with ACE (ADAPTIVE Communication Environment).
 
-%if %mdkversion < 200900
-%post -n %{lib_name} -p /sbin/ldconfig
-%endif
-%if %mdkversion < 200900
-%postun -n %{lib_name} -p /sbin/ldconfig
-%endif
-
 %files -n %{lib_name}
-%defattr(-,root,root)
 %{_libdir}/*-%{version}.so
 
 #----------------------------------------------------------------------------
@@ -53,19 +43,16 @@ with ACE (ADAPTIVE Communication Environment).
 %define lib_name_devel  %mklibname %{name} -d
 
 %package -n %{lib_name_devel}
-Group: Development/C++
-Summary: Shared libraries and header files for ACE (ADAPTIVE Communication Environment)
-Obsoletes: %{mklibname ace 5 -d} < %{epoch}:%{version}-%{release}
-Provides: %{name}-devel = %{epoch}:%{version}-%{release}
-Requires: %{lib_name} = %{epoch}:%{version}-%{release}
-Obsoletes: gperf-ace
+Group:		Development/C++
+Summary:	Shared libraries and header files for ACE (ADAPTIVE Communication Environment)
+Provides:	%{name}-devel = %{version}-%{release}
+Requires:	%{lib_name} = %{version}-%{release}
 
 %description -n %{lib_name_devel}
-The %{name} package contains the shared libraries and header files needed for
-developing ACE (ADAPTIVE Communication Environment) applications.
+The %{name} package contains the shared libraries and header files 
+needed for developing ACE (ADAPTIVE Communication Environment) applications.
 
 %files -n %{lib_name_devel}
-%defattr(-,root,root)
 %doc ACE-INSTALL.html AUTHORS ChangeLog COPYING FAQ NEWS PROBLEM-REPORT-FORM README THANKS VERSION
 %{_bindir}/*
 %{_mandir}/man1/*
@@ -73,9 +60,7 @@ developing ACE (ADAPTIVE Communication Environment) applications.
 %{_includedir}/ACEXML
 %{_includedir}/Kokyu
 %{_libdir}/*.so
-%{_libdir}/*.la
 %{_libdir}/pkgconfig/*
-%multiarch %{multiarch_includedir}/*
 %exclude %{_libdir}/*-%{version}.so
 
 #----------------------------------------------------------------------------
@@ -83,31 +68,27 @@ developing ACE (ADAPTIVE Communication Environment) applications.
 %define lib_name_devel_stat  %mklibname %{name} -d -s
 
 %package -n %{lib_name_devel_stat}
-Group: Development/C++
-Summary: Shared libraries and header files for ACE (ADAPTIVE Communication Environment)
-Requires: %{lib_name_devel} = %{epoch}:%{version}-%{release}
+Group:		Development/C++
+Summary:	Shared libraries and header files for ACE (ADAPTIVE Communication Environment)
+Requires:	%{lib_name_devel} = %{version}-%{release}
 
 %description -n %{lib_name_devel_stat}
-The %{name} package contains the shared libraries and header files needed for
-developing ACE (ADAPTIVE Communication Environment) applications.
+The %{name} package contains the shared libraries and header files 
+needed for developing ACE (ADAPTIVE Communication Environment) applications.
 
 %files -n %{lib_name_devel_stat}
-%defattr(-,root,root)
 %{_libdir}/*.a
 
 #----------------------------------------------------------------------------
 
 %package -n %{name}-doc
-Group:          Books/Howtos
-Summary:        Documentation and examples for ACE (ADAPTIVE Communication Environment)
-Obsoletes:      %{lib_name}-doc < %{epoch}:%{version}-%{release}
-Provides:       %{lib_name}-doc = %{epoch}:%{version}-%{release}
+Group:		Books/Howtos
+Summary:	Documentation and examples for ACE (ADAPTIVE Communication Environment)
 
 %description -n %{name}-doc
 Documentation and examples for ACE (ADAPTIVE Communication Environment).
 
 %files -n %{name}-doc
-%defattr(-,root,root)
 %doc docs examples
 
 #----------------------------------------------------------------------------
@@ -136,8 +117,6 @@ cd build
 cd -
 
 %install
-rm -rf %{buildroot}
-
 %makeinstall_std -C build
 
 # The install script is incomplete (to be polite)
@@ -145,7 +124,7 @@ rm -rf %{buildroot}
 # Shameless adaptation from Debian rules
 install -m 755 bin/generate_export_file.pl %{buildroot}%{_bindir}
 
-files=`grep -lr defined.*ACE_TEMPLATES_REQUIRE_SOURCE ace | %{__sed} -e 's/^\.//' -e 's/.h$/.cpp/'`
+files=`grep -lr defined.*ACE_TEMPLATES_REQUIRE_SOURCE ace | sed -e 's/^\.//' -e 's/.h$/.cpp/'`
 for i in $files ; do
     if [ ! -f %{buildroot}%{_includedir}/$i -a -f $i ] ; then
         install -m 644 $i %{buildroot}%{_includedir}/`dirname $i`
@@ -172,10 +151,3 @@ if test x"%{_libdir}" != "x%{_prefix}/lib"; then
     fi
 fi
 
-# multiarch
-%multiarch_includes %{buildroot}%{_includedir}/ace/config.h
-%multiarch_includes %{buildroot}%{_includedir}/ace/config-win32-common.h
-%multiarch_includes %{buildroot}%{_includedir}/ace/config-win32-ghs.h
-
-%clean
-rm -rf %{buildroot}
