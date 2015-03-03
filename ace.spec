@@ -6,6 +6,7 @@ License: 	BSD-style
 Group:		System/Libraries
 URL:		http://www.cs.wustl.edu/~schmidt/ACE.html
 Source0:	http://download.dre.vanderbilt.edu/previous_versions/ACE-src-%{version}.tar.bz2
+Source100:	%{name}.rpmlintrc
 Patch1:		ACE-5.8.1-link.patch
 Patch2:		ACE-5.8.1-ssl-1.0.patch
 BuildRequires:	pkgconfig(openssl)
@@ -45,8 +46,8 @@ with ACE (ADAPTIVE Communication Environment).
 %package -n %{lib_name_devel}
 Group:		Development/C++
 Summary:	Shared libraries and header files for ACE (ADAPTIVE Communication Environment)
-Provides:	%{name}-devel = %{version}-%{release}
-Requires:	%{lib_name} = %{version}-%{release}
+Provides:	%{name}-devel = %{EVRD}
+Requires:	%{lib_name} = %{EVRD}
 
 %description -n %{lib_name_devel}
 The %{name} package contains the shared libraries and header files 
@@ -70,7 +71,7 @@ needed for developing ACE (ADAPTIVE Communication Environment) applications.
 %package -n %{lib_name_devel_stat}
 Group:		Development/C++
 Summary:	Shared libraries and header files for ACE (ADAPTIVE Communication Environment)
-Requires:	%{lib_name_devel} = %{version}-%{release}
+Requires:	%{lib_name_devel} = %{EVRD}
 
 %description -n %{lib_name_devel_stat}
 The %{name} package contains the shared libraries and header files 
@@ -97,6 +98,11 @@ Documentation and examples for ACE (ADAPTIVE Communication Environment).
 %setup -q -n ACE_wrappers
 %patch1 -p0 -b .link
 %patch2 -p0 -b .ssl
+pushd examples
+find . -type f -name "*.pl" -exec chmod -x {} \;
+popd
+
+
 
 %build
 autoreconf -i -v -f
@@ -105,7 +111,7 @@ export CONFIGURE_TOP=${PWD}
 
 mkdir -p build
 cd build 
-%configure2_5x \
+%configure \
    --enable-lib-all \
    --enable-static \
    --enable-symbol-visibility \
@@ -137,8 +143,6 @@ for i in $files ; do
         install -m 644 $i %{buildroot}%{_includedir}/`dirname $i`
     fi
 done
-
-# I hope that's all we need
 
 # fix location of .pc files
 if test x"%{_libdir}" != "x%{_prefix}/lib"; then
