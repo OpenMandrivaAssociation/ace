@@ -1,18 +1,17 @@
 # it has perl shebang...
 addFilter("W: script-without-shebang")
 # OMA has a policy how to deal with pem certs?
-W: pem-certificate 
+addFilter("W: pem-certificate") 
 # no comment..
-W: only-non-binary-in-usr-lib
-W: not-standard-release-extension 
+addFilter("W: only-non-binary-in-usr-lib")
+addFilter("W: not-standard-release-extension") 
 # docs are in the doc package
-W: no-manual-page-for-binary 
-W: no-documentation
-W: no-documentation
+addFilter("W: no-manual-page-for-binary") 
+addFilter("W: no-documentation")
 #  EVRD-ed the devel but is useless
-E: no-dependency-on 
+addFilter("E: no-dependency-on") 
 # BSD-like is very valid to me...
-W: invalid-license 
+addFilter("W: invalid-license") 
 # no comment
-E: incoherent-version-in-name 
-W: call-to-mktemp
+addFilter("E: incoherent-version-in-name") 
+addFilter("W: call-to-mktemp")
